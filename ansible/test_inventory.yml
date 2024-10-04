@@ -1,0 +1,9 @@
+[linux]
+192.168.1.5
+[linux:vars]
+ansible_user=ansible
+ansible_password=AnsibleUser!
+ansible_become_method=sudo
+ansible_become=yes
+
+# Julian Loontjens
