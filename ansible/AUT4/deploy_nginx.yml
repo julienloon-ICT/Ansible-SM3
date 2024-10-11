@@ -1,0 +1,11 @@
+---
+
+- hosts: webservers
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Deploy NGINX
+      include_role:
+        name: deploy_nginx
+      tags: deploy_nginx

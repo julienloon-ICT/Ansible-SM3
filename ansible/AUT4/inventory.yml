@@ -1,0 +1,69 @@
+linux:
+  hosts:
+    SR-WEB-01: 
+      ansible_host: 192.168.1.4
+    SR-WEB-02: 
+      ansible_host: 192.168.1.5
+    SR-MON-01: 
+      ansible_host: 192.168.1.6
+    SR-ODL-01: 
+      ansible_host: 192.168.1.7
+    SR-MIN-01: 
+      ansible_host: 192.168.1.8
+    SR-ELK-01: 
+      ansible_host: 192.168.2.2
+    SR-FLE-01: 
+      ansible_host: 192.168.2.3
+    SR-HIV-01: 
+      ansible_host: 192.168.2.4
+  vars:
+    ansible_user: ansible
+    ansible_password: AnsibleUser!
+    ansible_become_method: sudo
+    ansible_become: yes
+
+vlana:
+  hosts:
+    SR-WEB-01: 
+      ansible_host: 192.168.1.4
+    SR-WEB-02: 
+      ansible_host: 192.168.1.5
+    SR-MON-01: 
+      ansible_host: 192.168.1.6
+    SR-ODL-01: 
+      ansible_host: 192.168.1.7
+    SR-MIN-01: 
+      ansible_host: 192.168.1.8
+  vars:
+    ansible_user: ansible
+    ansible_password: AnsibleUser!
+    ansible_become_method: sudo
+    ansible_become: yes
+
+vlanb:
+  hosts:
+    SR-ELK-01: 
+      ansible_host: 192.168.2.2
+    SR-FLE-01: 
+      ansible_host: 192.168.2.3
+    SR-HIV-01: 
+      ansible_host: 192.168.2.4
+  vars:
+    ansible_user: ansible
+    ansible_password: AnsibleUser!
+    ansible_become_method: sudo
+    ansible_become: yes
+
+webservers:
+  hosts:
+    SR-WEB-01:
+      ansible_host: 192.168.1.4
+    SR-WEB-02:
+      ansible_host: 192.168.1.5
+  vars:
+    ansible_user: ansible
+    ansible_password: AnsibleUser!
+    ansible_become_method: sudo
+    ansible_become: yes
+
+# Julian Loontjens

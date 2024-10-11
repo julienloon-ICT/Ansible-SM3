@@ -1,0 +1,58 @@
+---
+- name: Display OS distribution information
+      debug:
+        msg: |
+          Host: {{ inventory_hostname }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Architecture: {{ ansible_architecture }}
+          Memory: {{ ansible_memtotal_mb }} MB
+          Processor: {{ ansible_processor[0] }}
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+
+    - name: Get list of upgradable packages
+      command: apt list --upgradable
+      register: upgradable_packages
+
+    - name: Display upgradable packages
+      debug:
+        msg: |
+          Here are the upgradeable packages: {{ upgradable_packages.stdout }}  
+
+    - name: Upgrade all packages on servers
+      apt:
+        upgrade: dist
+        force_apt_get: yes
+
+    - name: Check if a reboot is needed for all servers
+      register: reboot_required_file
+      stat:
+        path: /var/run/reboot-required 
+        get_checksum: no
+
+    - name: Check if a reboot is needed for all servers
+      reboot:
+        msg: "Reboot initiated by Ansible for system updates."
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: uptime
+      when: reboot_required_file.stat.exists
+
+    - name: Get list of unfinished upgradable packages
+      command: apt list --upgradable
+      register: upgradable_packages
+
+    - name: Display upgradable packages
+      debug:
+        msg: |
+          Here is a list of upgradeable packages that weren't installed: {{ upgradable_packages.stdout }} 
+
+# Bron: https://www.cyberciti.biz/faq/ansible-apt-update-all-packages-on-ubuntu-debian-linux/ & https://www.youtube.com/watch?v=sSHpixS6OSo&list=PLXHMZDvOn5sW-EXm2Ur5TroSatW-t0Vz_&index=3
+# Julian Loontjens

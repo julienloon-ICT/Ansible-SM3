@@ -1,0 +1,11 @@
+---
+- name: Install CheckMK Agent
+  hosts: webservers
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Deploy CheckMK Agent
+      include_role:
+        name: deploy_checkmk_agent_nginx_agent
+      tags: deploy_checkmk_agent_nginx_agent

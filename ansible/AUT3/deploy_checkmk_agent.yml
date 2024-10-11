@@ -1,0 +1,30 @@
+---
+- name: Install CheckMK Agent
+  hosts: linux
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Download Checkmk-agent vanaf de CMK-server
+      ansible.builtin.get_url:
+        url: http://192.168.1.6/julianloontjens/check_mk/agents/check-mk-agent_2.3.0p17-1_all.deb
+        dest: /tmp/check-mk-agent.deb
+        url_username: "{{ cmk_username }}"
+        url_password: "{{ cmk_password }}"
+        force_basic_auth: yes
+
+    - name: Install agent
+      ansible.builtin.apt:
+        deb: /tmp/check-mk-agent.deb 
+        state: present
+        update_cache: yes  
+
+    - name: Verwijder bestand na installatie
+      ansible.builtin.file:
+        path: /tmp/check-mk-agent.deb  
+        state: absent
+
+    - name: Herstart Checkmk-agent
+      ansible.builtin.service:
+        name: check-mk-agent.socket
+        state: restarted
