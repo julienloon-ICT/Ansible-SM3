@@ -45,6 +45,8 @@
         dest: /usr/lib/check_mk_agent/plugins/check_nginx
         mode: '0755'
 
+    
+
     - name: Herstart Checkmk-agent
       ansible.builtin.service:
         name: check-mk-agent.socket

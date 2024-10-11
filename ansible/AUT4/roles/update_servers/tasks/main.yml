@@ -1,5 +1,5 @@
 ---
-- name: Display OS distribution information
+    - name: Display OS distribution information
       debug:
         msg: |
           Host: {{ inventory_hostname }}
