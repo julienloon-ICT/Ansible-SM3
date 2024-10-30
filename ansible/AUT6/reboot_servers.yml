@@ -1,0 +1,12 @@
+---
+  
+- hosts: linux
+  gather_facts: true  # Zorg dat facts verzameld worden
+
+  tasks:
+    - name: Reboot Servers
+      include_role:
+        name: reboot_servers
+      tags: reboot_servers
+
+# Julian Loontjens

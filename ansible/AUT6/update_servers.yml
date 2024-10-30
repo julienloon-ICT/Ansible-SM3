@@ -1,0 +1,11 @@
+---
+  
+- hosts: linux
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Update Servers
+      include_role:
+        name: update_servers
+      tags: update_servers

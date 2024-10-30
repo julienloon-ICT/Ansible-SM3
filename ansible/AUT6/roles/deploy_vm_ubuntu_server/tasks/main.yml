@@ -1,0 +1,56 @@
+---
+- name: Deploy VM from a Template
+  vmware_guest:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "Netlab-DC"
+    cluster: "Netlab-Cluster-B"
+    resource_pool: "I528678"
+    folder: "_Courses/I3-DB01/I528678"
+    name: "{{vm_name}}"
+    state: poweredon
+    template: "Template_Julian_UbuntuServer-24.04.1"
+    disk:
+      - datastore: "DataCluster-Students"
+        size_gb: 90
+        type: thin
+    networks:
+      - name: "2726_I528678_PVlanA"
+        dvswitch_name: "vDS-VLAN"
+        vlan: 2726
+        connected: true
+        type: dhcp
+    wait_for_ip_address: true
+    wait_for_ip_address_timeout: 600
+    wait_for_customization: true
+  register: deploy_vm
+
+- name: Debug deploy_vm output to identify IP address path
+  debug:
+    var: deploy_vm
+
+- name: Wait a couple of seconds for the VM to obtain an IP address from DHCP server
+  pause:
+    seconds: 30  # Adjust the time as needed
+
+- name: Set VM IP variable
+  set_fact:
+    vm_ip: "{{ deploy_vm.instance.ipv4 }}"
+
+- name: Wait until VM is ready
+  wait_for:
+    host: "{{ deploy_vm.instance.ipv4 }}"
+    port: 22
+    delay: 10
+    timeout: 600
+    state: started
+  remote_user: "{{ server_username }}"
+  vars:
+    ansible_ssh_pass: "{{ server_password }}"
+
+- name: Add host to deployed_vms group
+  add_host:
+    name: "{{vm_name}}"
+    groups: deployed_vms

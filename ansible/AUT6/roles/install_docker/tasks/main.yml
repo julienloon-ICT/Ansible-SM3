@@ -1,0 +1,105 @@
+---
+- name: Install Docker
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Add Docker GPG key
+  shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive.gpg
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive.gpg] https://download.docker.com/linux/ubuntu focal stable"
+    state: present
+    update_cache: yes
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Start and enable Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Get Docker version
+  command: docker -v
+  register: docker_version
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Show Docker version
+  debug:
+    msg: "Docker version: {{ docker_version.stdout }}"
+  delegate_to: "{{ vm_ip }}"
+
+- name: Create Docker volume for Portainer
+  command: docker volume create portainer_data
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Run Portainer Server container
+  command: >
+    docker run -d -p 8000:8000 -p 9443:9443 --name portainer
+    --restart=always -v /var/run/docker.sock:/var/run/docker.sock
+    -v portainer_data:/data portainer/portainer-ce:2.21.4
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Check if Portainer container is running
+  command: docker ps
+  register: portainer_status
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Show Portainer container status
+  debug:
+    msg: "Portainer container status: {{ portainer_status.stdout }}"
+  delegate_to: "{{ vm_ip }}"
+
+- name: Create Docker volume for Grafana
+  command: docker volume create grafana_data
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Run Grafana Server container
+  command: >
+    docker run -d -p 3000:3000 --name grafana
+    --restart=always -v /var/run/docker.sock:/var/run/docker.sock
+    -v grafana_data:/data grafana/grafana
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Check if Grafana container is running
+  command: docker ps
+  register: grafana_status
+  become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Show Grafana container status
+  debug:
+    msg: "Grafana container status: {{ grafana_status.stdout }}"
+  delegate_to: "{{ vm_ip }}"

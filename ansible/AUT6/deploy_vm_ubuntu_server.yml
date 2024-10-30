@@ -1,0 +1,19 @@
+---
+- name: Deploy and Configure Ubuntu VM
+  gather_facts: no
+  hosts: localhost
+  vars_files:
+    - vault.yml
+
+  tasks:
+    - name: Deploy VM Ubuntu Server
+      include_role:
+        name: deploy_vm_ubuntu_server
+      tags: deploy_vm_ubuntu_server
+
+    - name: Install Docker and Portainer on the new VM
+      include_role:
+        name: install_docker
+      vars:
+        ansible_ssh_user: "{{ server_username }}"
+        ansible_ssh_pass: "{{ server_password }}"

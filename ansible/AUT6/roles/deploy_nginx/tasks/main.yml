@@ -1,0 +1,59 @@
+---
+    - name: Display OS distribution information
+      debug:
+        msg: |
+          Host: {{ inventory_hostname }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Architecture: {{ ansible_architecture }}
+          Memory: {{ ansible_memtotal_mb }} MB
+          Processor: {{ ansible_processor[0] }}
+
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages on servers
+      apt:
+        upgrade: dist
+        force_apt_get: yes
+
+    - name: Install Nginx
+      apt: 
+        name: nginx 
+        state: latest
+    
+    - name: Create directory for static content
+      file:
+        path: /var/www/html/hello-world
+        state: directory
+        mode: 0755
+
+    - name: Create "index.html" file with "hello world" content
+      template:
+        src: "/home/student/ansible/AUT4/supporting_files/index.html"
+        dest: /var/www/html/hello-world/index.html
+        mode: 0644
+
+    - name: Copy "index.html" to default Nginx location
+      copy:
+        src: /var/www/html/hello-world/index.html
+        dest: /var/www/html/index.html
+        mode: 0644
+        remote_src: true
+
+    - name: Enable default Nginx website
+      file:
+        src: /etc/nginx/sites-available/default
+        path: /etc/nginx/sites-enabled/default
+        state: link
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+# Bron: https://medium.com/@JleeCloudEngineer/how-to-install-nginx-using-ansible-playbook-on-ubuntu-vm-to-display-custom-html-page-fe8e7be4b1bc
+# Julian Loontjens
