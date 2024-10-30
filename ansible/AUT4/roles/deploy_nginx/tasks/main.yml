@@ -33,7 +33,7 @@
 
     - name: Create "index.html" file with "hello world" content
       template:
-        src: "/home/student/ansible/supporting_files/index.html"
+        src: "/home/student/ansible/AUT4/supporting_files/index.html"
         dest: /var/www/html/hello-world/index.html
         mode: 0644
 

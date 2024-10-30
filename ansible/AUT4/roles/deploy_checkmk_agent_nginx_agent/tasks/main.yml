@@ -1,59 +1,97 @@
 ---
-    - name: Display OS distribution information
-      debug:
-        msg: |
-          Host: {{ inventory_hostname }}
-          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
-          Kernel: {{ ansible_kernel }}
-          Architecture: {{ ansible_architecture }}
-          Memory: {{ ansible_memtotal_mb }} MB
-          Processor: {{ ansible_processor[0] }}
+- name: Display OS distribution information
+  debug:
+    msg: |
+      Host: {{ inventory_hostname }}
+      OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+      Kernel: {{ ansible_kernel }}
+      Architecture: {{ ansible_architecture }}
+      Memory: {{ ansible_memtotal_mb }} MB
+      Processor: {{ ansible_processor[0] }}
 
-    - name: Download Checkmk-agent vanaf de CMK-server
-      ansible.builtin.get_url:
-        url: http://192.168.1.6/julianloontjens/check_mk/agents/check-mk-agent_2.3.0p17-1_all.deb
-        dest: /tmp/check-mk-agent.deb
-        url_username: "{{ cmk_username }}"
-        url_password: "{{ cmk_password }}"
-        force_basic_auth: yes
+- name: Download Checkmk-agent vanaf de CMK-server
+  ansible.builtin.get_url:
+    url: http://192.168.1.6/julianloontjens/check_mk/agents/check-mk-agent_2.3.0p17-1_all.deb
+    dest: /tmp/check-mk-agent.deb
+    url_username: "{{ cmk_username }}"
+    url_password: "{{ cmk_password }}"
+    force_basic_auth: yes
 
-    - name: Install agent
-      ansible.builtin.apt:
-        deb: /tmp/check-mk-agent.deb 
-        state: present
-        update_cache: yes  
+- name: Install agent
+  ansible.builtin.apt:
+    deb: /tmp/check-mk-agent.deb 
+    state: present
+    update_cache: yes  
 
-    - name: Register CheckMK agent using Bash
-      ansible.builtin.shell: |
-        cmk-agent-ctl register --hostname {{ inventory_hostname }} \
-          --server 192.168.1.6 --site julianloontjens \
-          --user agent_registration --password '{{ cmk_registration_password }}' \
-          --trust-cert
+- name: Register CheckMK agent using Bash
+  ansible.builtin.shell: |
+    cmk-agent-ctl register --hostname {{ inventory_hostname }} \
+      --server 192.168.1.6 --site julianloontjens \
+      --user agent_registration --password '{{ cmk_registration_password }}' \
+      --trust-cert
 
-    - name: Show inventory hostname and IP
-      debug:
-        msg: "Host: {{ inventory_hostname }} has IP: {{ ansible_host }}"
-      
-    - name: Verwijder bestand na installatie
-      ansible.builtin.file:
-        path: /tmp/check-mk-agent.deb  
-        state: absent
-      
-    - name: Install the Checkmk NGINX plugin
-      ansible.builtin.get_url:
-        url: http://192.168.1.6/julianloontjens/check_mk/agents/plugins/nginx_status.py
-        dest: /usr/lib/check_mk_agent/plugins/check_nginx
-        mode: '0755'
+- name: Show inventory hostname and IP
+  debug:
+    msg: "Host: {{ inventory_hostname }} has IP: {{ ansible_host }}"
 
-    
+- name: Verwijder bestand na installatie
+  ansible.builtin.file:
+    path: /tmp/check-mk-agent.deb  
+    state: absent
 
-    - name: Herstart Checkmk-agent
-      ansible.builtin.service:
-        name: check-mk-agent.socket
-        state: restarted
+- name: Install NGINX if not installed
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: yes
 
-    - name: Ensure NGINX is running
-      ansible.builtin.service:
-        name: nginx
-        state: started
-        enabled: yes
+- name: Create directory for static content
+  file:
+    path: /var/www/html/hello-world
+    state: directory
+    mode: 0755
+
+- name: Create "index.html" file with "hello world" content
+  template:
+    src: "/home/student/ansible/AUT4/supporting_files/index.html"
+    dest: /var/www/html/hello-world/index.html
+    mode: 0644
+
+- name: Copy "index.html" to default Nginx location
+  copy:
+    src: /var/www/html/hello-world/index.html
+    dest: /var/www/html/index.html
+    mode: 0644
+    remote_src: true
+
+- name: Enable default Nginx website
+  file:
+    src: /etc/nginx/sites-available/default
+    path: /etc/nginx/sites-enabled/default
+    state: link
+
+- name: Install the Checkmk NGINX plugin
+  ansible.builtin.get_url:
+    url: http://192.168.1.6/julianloontjens/check_mk/agents/plugins/nginx_status.py
+    dest: /usr/lib/check_mk_agent/plugins/nginx_status.py
+    mode: '0755'
+
+- name: Execute nginx_status.py plugin to check NGINX status
+  ansible.builtin.command: /usr/lib/check_mk_agent/plugins/nginx_status.py
+  register: nginx_status_output
+  ignore_errors: no
+
+- name: Show output of NGINX plugin script
+  debug:
+    msg: "{{ nginx_status_output.stdout }}"
+  
+- name: Herstart Checkmk-agent
+  ansible.builtin.service:
+    name: check-mk-agent.socket
+    state: restarted
+
+- name: Ensure NGINX is running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes
