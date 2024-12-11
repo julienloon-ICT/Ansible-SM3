@@ -10,16 +10,24 @@
   become: yes
   delegate_to: "{{ vm_ip }}"
 
-- name: Add Docker GPG key
-  shell: |
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive.gpg
+- name: Create directory for Docker keyrings
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
   become: yes
+  delegate_to: "{{ vm_ip }}"
+
+- name: Add Docker's official GPG key
+  shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+  become: yes
+  delegate_to: "{{ vm_ip }}"
 
 - name: Add Docker repository
-  apt_repository:
-    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive.gpg] https://download.docker.com/linux/ubuntu focal stable"
-    state: present
-    update_cache: yes
+  shell: |
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
   become: yes
   delegate_to: "{{ vm_ip }}"
 
